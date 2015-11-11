@@ -1,5 +1,5 @@
 
-import CintSDK from '../index';
+import CintSDK from '../src/index';
 import should from 'should';
 import sinon from 'sinon';
 
