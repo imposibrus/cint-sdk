@@ -4,35 +4,21 @@ var http = require('http'),
     Promise = require('bluebird'),
     logger = require('../lib/logger');
 
-http.request({
-  host: 'cdp.cintworks.net',
-  path: '/'
-}, function(res) {
-  var respData = '';
-
-  res.on('data', function(data) {
-    respData += data;
-  });
-  res.on('end', function() {
-    console.log(respData);
-  });
-});
-
 class CintSDK {
   cintHost = 'cdp.cintworks.net';
   protocol = 'http';
 
   static noAuthResources = ['/', '/genders', '/statuses', '/transaction_types'];
+  static xmlResources = [/^\/panels\/.[^\/]*\/questions$/];
 
-  constructor({protocol = 'https'} = {}) {
+  constructor({protocol = 'https', key = null, secret = null} = {}) {
     this.protocol = protocol;
-  }
 
-  setAuth(key = null, secret = null) {
     if(!key || !secret) {
       throw new Error('options `key` and `secret` are required');
     }
 
+    this.key = key;
     this.basicAuthString = new Buffer(key + ':' + secret).toString('base64');
   }
 
@@ -56,29 +42,65 @@ class CintSDK {
     return this._request({path: '/genders'});
   }
 
-  _request({method = 'GET', path = '/'} = {}) {
+  getQuestions(key = this.key) {
+    return this._request({path: '/panels/' + key + '/questions'});
+  }
+
+  getPanelists(key = this.key) {
+    return this._request({path: '/panels/' + key + '/panelists'});
+  }
+
+  createPanelist(postData, key = this.key) {
+    return this._request({method: 'POST', path: '/panels/' + key + '/panelists', postData: postData});
+  }
+
+  updatePanelist(postData, panelistId, key = this.key) {
+    if(!panelistId) {
+      throw new Error('Argument `panelistId` is required.');
+    }
+    return this._request({method: 'PATCH', path: '/panels/' + key + '/panelists/' + panelistId, postData: postData});
+  }
+
+  getPanelist(panelistId, key = this.key) {
+    if(!panelistId) {
+      throw new Error('Argument `panelistId` is required.');
+    }
+    return this._request({path: '/panels/' + key + '/panelists/' + panelistId});
+  }
+
+  getRespondents(key = this.key) {
+    return this._request({path: '/panels/' + key + '/respondent'});
+  }
+
+  _request({method = 'GET', path = '/', postData} = {}) {
     return new Promise((resolve, reject) => {
-      // TODO: protocol
-      logger.debug('_request: request with params %:2j:', {hostname: this.cintHost, path: path, method: method});
       let requester = this.protocol == 'https' ? https : http,
+          contentType = CintSDK.xmlResources.filter(regexp => regexp.test(path)).length ? 'application/xml' : 'application/json',
           headers = {
-            Accept: 'application/json'
-          };
+            Accept: contentType
+          },
+          requestOptions = {
+            hostname: this.cintHost,
+            path: path,
+            method: method
+          },
+          _postData;
 
       if(CintSDK.noAuthResources.indexOf(path) == -1) {
-        if(!this.basicAuthString) {
-          throw new Error('This method requires authentication. You must `setAuth` with `key` and `secret` first.');
-        }
-
         headers.Authorization = 'Basic ' + this.basicAuthString;
       }
 
-      var request = requester.request({
-        hostname: this.cintHost,
-        path: path,
-        method: method,
-        headers: headers
-      }, function(res) {
+      if(postData) {
+        _postData = JSON.stringify(postData);
+        headers['Content-Type'] = 'application/json';
+        headers['Content-length'] = _postData.length;
+        logger.debug('_request: request with postData: %:2j', _postData);
+      }
+
+      requestOptions.headers = headers;
+      logger.debug('_request: request with params: %:2j', requestOptions);
+
+      var request = requester.request(requestOptions, function(res) {
         var resData = '',
             resJSON = '';
 
@@ -86,15 +108,26 @@ class CintSDK {
           resData += data;
         });
         res.on('end', function() {
+          if(contentType == 'application/xml') {
+            return resolve(resData);
+          }
+
+          logger.debug('_request: response statusCode:', res.statusCode);
+          // TODO: empty body for several requests as valid answer
           try {
             resJSON = JSON.parse(resData);
           } catch(err) {
+            logger.debug('_request: invalid response:', resData);
             return reject(new Error('Invalid JSON response:' + resData));
           }
           logger.debug('_request: response: %:2j', resJSON);
           resolve(resJSON);
         });
       }).on('error', reject);
+
+      if(postData) {
+        request.write(_postData);
+      }
 
       request.end();
     });

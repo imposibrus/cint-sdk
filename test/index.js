@@ -3,7 +3,7 @@ import CintSDK from '../src/index';
 import should from 'should';
 import sinon from 'sinon';
 
-const cintSDK = new CintSDK();
+const cintSDK = new CintSDK({key: process.env.CINTKEY, secret: process.env.CINTSECRET});
 
 describe('Main page', function() {
   before(function() {
@@ -18,9 +18,7 @@ describe('Main page', function() {
     sinon.assert.calledOnce(cintSDK._request);
   });
 
-  it('should set auth headers', function() {
-    should.not.exist(cintSDK.basicAuthString);
-    cintSDK.setAuth(process.env.CINTKEY, process.env.CINTSECRET);
+  it('should auth headers exist', function() {
     should.exist(cintSDK.basicAuthString);
   });
 
