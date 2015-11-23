@@ -1,8 +1,11 @@
 
-var http = require('http'),
-    https = require('https'),
-    Promise = require('bluebird'),
-    logger = require('../lib/logger');
+import http from 'http';
+import https from 'https';
+import querystring from 'querystring';
+import Promise from 'bluebird';
+import logger from '../lib/logger';
+
+import _find from 'lodash.find';
 
 class CintSDK {
   cintHost = 'cdp.cintworks.net';
@@ -46,19 +49,26 @@ class CintSDK {
     return this._request({path: '/panels/' + key + '/questions'});
   }
 
-  getPanelists(key = this.key) {
-    return this._request({path: '/panels/' + key + '/panelists'});
+  getPanelists(searchParams, key = this.key) {
+    if(!searchParams) {
+      throw new Error('argument `searchParams` must have `member_id` or `email` property.');
+    }
+    return this._request({path: '/panels/' + key + '/panelists?' + querystring.stringify(searchParams)});
+  }
+
+  deletePanelist(panelistId, key = this.key) {
+    return this._request({method: 'DELETE', path: '/panels/' + key + '/panelists/' + panelistId});
   }
 
   createPanelist(postData, key = this.key) {
-    return this._request({method: 'POST', path: '/panels/' + key + '/panelists', postData: postData});
+    return this._request({method: 'POST', path: '/panels/' + key + '/panelists', postData});
   }
 
   updatePanelist(postData, panelistId, key = this.key) {
     if(!panelistId) {
       throw new Error('Argument `panelistId` is required.');
     }
-    return this._request({method: 'PATCH', path: '/panels/' + key + '/panelists/' + panelistId, postData: postData});
+    return this._request({method: 'PATCH', path: '/panels/' + key + '/panelists/' + panelistId, postData});
   }
 
   getPanelist(panelistId, key = this.key) {
@@ -70,6 +80,29 @@ class CintSDK {
 
   getRespondents(key = this.key) {
     return this._request({path: '/panels/' + key + '/respondent'});
+  }
+
+  candidateRespondent(postData, panelistId, key = this.key) {
+    if(!panelistId) {
+      throw new Error('Argument `panelistId` is required.');
+    }
+    return this._request({
+      method: 'POST',
+      path: '/panels/' + key + '/panelists/' + panelistId + '/candidate_respondents',
+      postData
+    }).then((candidateData) => new CandidateRespondent(candidateData) );
+  }
+
+  getRespondentQuotas(key = this.key) {
+    return this._request({path: '/panels/' + key + '/respondent_quotas'});
+  }
+
+  getEvents(key = this.key) {
+    return this._request({path: '/panels/' + key + '/events'});
+  }
+
+  getSurveyInvitations(panelistId, key = this.key) {
+    return this._request({path: '/panels/' + key + '/panelists/'+ panelistId +'/survey_invitations'});
   }
 
   _request({method = 'GET', path = '/', postData} = {}) {
@@ -104,6 +137,10 @@ class CintSDK {
         var resData = '',
             resJSON = '';
 
+        if(res.statusCode == 204) {
+          return resolve({});
+        }
+
         res.on('data', function(data) {
           resData += data;
         });
@@ -113,7 +150,6 @@ class CintSDK {
           }
 
           logger.debug('_request: response statusCode:', res.statusCode);
-          // TODO: empty body for several requests as valid answer
           try {
             resJSON = JSON.parse(resData);
           } catch(err) {
@@ -134,4 +170,46 @@ class CintSDK {
   }
 }
 
+class CandidateRespondent {
+  constructor(props, cintSDKInstance) {
+    this._properties = props;
+    this.cintSDKInstance = cintSDKInstance;
+
+    /*
+    {
+      public_id: '29ed785d-c90b-4294-8d68-506258419259',
+      respondent_params: 'p1=a&p2=b',
+      quota_ids: null,
+      allow_routing: true,
+      min_cpi: null,
+      auto_accept_invitation: true,
+      links: [
+       {
+         rel: 'parent',
+         href: 'https://cdp.cintworks.net/panels/4ef3f874-380c-4121-84b9-e92dd9b36903/panelists/86571682',
+         type: 'application/json'
+       }, {
+         rel: 'self',
+         href: 'https://cdp.cintworks.net/panels/4ef3f874-380c-4121-84b9-e92dd9b36903/panelists/86571682/candidate_respondents/29ed785d-c90b-4294-8d68-506258419259',
+         type: 'application/json'
+       }, {
+         rel: 'start',
+         href: 'https://cpx.cintworks.net/cpx3/CandidateRespondent/29ed785d-c90b-4294-8d68-506258419259',
+         type: 'application/json'
+       }
+     ]
+   }
+   */
+  }
+
+  get params() {
+    return this._properties.respondent_params;
+  }
+
+  get linkStart() {
+    return _find(this._properties.links, {rel: 'start'}).href;
+  }
+}
+
 export default CintSDK;
+export {CandidateRespondent as CandidateRespondent};
