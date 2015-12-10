@@ -8,7 +8,7 @@ import logger from '../lib/logger';
 import _find from 'lodash.find';
 
 class CintSDK {
-  cintHost = 'cdp.cintworks.net';
+  cintHost = 'api.cint.com';
   protocol = 'http';
 
   static noAuthResources = ['/', '/genders', '/statuses', '/transaction_types'];
@@ -174,32 +174,6 @@ class CandidateRespondent {
   constructor(props, cintSDKInstance) {
     this._properties = props;
     this.cintSDKInstance = cintSDKInstance;
-
-    /*
-    {
-      public_id: '29ed785d-c90b-4294-8d68-506258419259',
-      respondent_params: 'p1=a&p2=b',
-      quota_ids: null,
-      allow_routing: true,
-      min_cpi: null,
-      auto_accept_invitation: true,
-      links: [
-       {
-         rel: 'parent',
-         href: 'https://cdp.cintworks.net/panels/4ef3f874-380c-4121-84b9-e92dd9b36903/panelists/86571682',
-         type: 'application/json'
-       }, {
-         rel: 'self',
-         href: 'https://cdp.cintworks.net/panels/4ef3f874-380c-4121-84b9-e92dd9b36903/panelists/86571682/candidate_respondents/29ed785d-c90b-4294-8d68-506258419259',
-         type: 'application/json'
-       }, {
-         rel: 'start',
-         href: 'https://cpx.cintworks.net/cpx3/CandidateRespondent/29ed785d-c90b-4294-8d68-506258419259',
-         type: 'application/json'
-       }
-     ]
-   }
-   */
   }
 
   get params() {

@@ -1,0 +1,6 @@
+
+.idea/
+node_modules/
+test/
+Gulpfile.js
+testSetup.js

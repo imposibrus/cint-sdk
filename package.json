@@ -1,16 +1,45 @@
 {
   "name": "cint-sdk",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Unofficial Cint Engage SDK for Node.js",
+  "keywords": [
+    "cint",
+    "engage",
+    "sdk"
+  ],
+  "main": "dst/index.js",
   "directories": {
     "test": "test"
   },
+  "homepage": "https://github.com/imposibrus/cint-sdk",
+  "bugs": {
+    "url": "https://github.com/imposibrus/cint-sdk/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Vadim Petrov"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/imposibrus/cint-sdk.git"
+  },
+  "engines": {
+    "node": ">=0.10.25"
+  },
+  "scripts": {
+    "test": "mocha",
+    "prepublish": "gulp compile"
+  },
+  "files": [
+    "dst/",
+    "lib/",
+    "src/",
+    "LICENSE"
+  ],
   "dependencies": {
     "bluebird": "^3.0.5",
     "intel": "^1.0.2",
-    "lodash.find": "^3.2.1",
-    "xml2js": "^0.4.15"
+    "lodash.find": "^3.2.1"
   },
   "devDependencies": {
     "babel-core": "^6.1.4",
@@ -22,15 +51,5 @@
     "mocha": "^2.3.3",
     "should": "^7.1.1",
     "sinon": "^1.17.2"
-  },
-  "scripts": {
-    "test": "mocha"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@bitbucket.org/ft-ru/cint-sdk.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "homepage": "https://bitbucket.org/ft-ru/cint-sdk#readme"
+  }
 }
