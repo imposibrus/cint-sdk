@@ -2,6 +2,7 @@
 import http from 'http';
 import https from 'https';
 import querystring from 'querystring';
+import util from 'util';
 import Promise from 'bluebird';
 import logger from '../lib/logger';
 
@@ -156,7 +157,7 @@ class CintSDK {
             logger.debug('_request: invalid response:', resData);
             return reject(new Error('Invalid JSON response:' + resData));
           }
-          logger.debug('_request: response: %:2j', resJSON);
+          logger.debug('_request: response: %.-500s', util.inspect(resJSON));
           resolve(resJSON);
         });
       }).on('error', reject);
